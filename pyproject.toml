@@ -1,11 +1,32 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "unloop"
-version = "0.0.1"
+version = "1.0.0"
 description = "Turn slow pandas loops into fast, verified vectorized code."
-authors = [{ name = "Sankalp Gaur" }]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Sankalp Gaur", email = "gaursankalp08@gmail.com" }]
 requires-python = ">=3.9"
 dependencies = ["pandas>=2.0", "numpy"]
+keywords = ["pandas", "numpy", "performance", "vectorization", "optimization", "jupyter"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Framework :: Jupyter",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.optional-dependencies]
+fast = ["pyarrow"]
+dev = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/sankalpgaur17/unloop"
+Issues = "https://github.com/sankalpgaur17/unloop/issues"
