@@ -18,3 +18,10 @@ from unloop.rewriter import RowToColumn
 expr = ast.parse('row["price"] * row["qty"]', mode="eval")
 new_expr = RowToColumn("row", "df").visit(expr)
 print(ast.unparse(new_expr))
+
+from unloop.rewriter import is_simple_expression
+
+good = ast.parse('row["price"] * row["qty"] + 5', mode="eval").body
+bad = ast.parse('row["price"] * get_tax(row)', mode="eval").body
+print(is_simple_expression(good, "row"))
+print(is_simple_expression(bad, "row"))

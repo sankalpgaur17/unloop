@@ -15,3 +15,27 @@ class RowToColumn(ast.NodeTransformer):
         if isinstance(node.value, ast.Name) and node.value.id == self.row_name:
             node.value = ast.Name(id=self.df_name, ctx=ast.Load())
         return node
+
+SAFE_OPERATORS = (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow)
+
+
+def is_simple_expression(node, row_name):
+    """Check that an expression only uses row["col"], numbers, and math."""
+    if isinstance(node, ast.Constant):
+        return isinstance(node.value, (int, float))
+    if isinstance(node, ast.Subscript):
+        return (
+            isinstance(node.value, ast.Name)
+            and node.value.id == row_name
+            and isinstance(node.slice, ast.Constant)
+            and isinstance(node.slice.value, str)
+        )
+    if isinstance(node, ast.BinOp):
+        return (
+            isinstance(node.op, SAFE_OPERATORS)
+            and is_simple_expression(node.left, row_name)
+            and is_simple_expression(node.right, row_name)
+        )
+    if isinstance(node, ast.UnaryOp):
+        return is_simple_expression(node.operand, row_name)
+    return False
