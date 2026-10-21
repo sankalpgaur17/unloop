@@ -44,3 +44,27 @@ def run_code(code, variables):
     space = copy_variables(variables)
     exec(code, space)
     return space
+
+
+def verify_code(old_code, new_code, variables=None):
+    """Run both versions and compare every DataFrame. Return (verdict, notes)."""
+    if variables is None:
+        variables = {}
+    old_space = run_code(old_code, variables)
+    new_space = run_code(new_code, variables)
+
+    verdict = "identical"
+    notes = []
+    for name, old_value in old_space.items():
+        if not isinstance(old_value, pd.DataFrame):
+            continue
+        new_value = new_space.get(name)
+        if not isinstance(new_value, pd.DataFrame):
+            return "different", [f"{name} is missing in the new version"]
+        result = compare_dataframes(old_value, new_value)
+        if result == "different":
+            return "different", [f"{name} has different values"]
+        if result == "same_values":
+            verdict = "same_values"
+            notes.extend(describe_dtype_changes(old_value, new_value))
+    return verdict, notes

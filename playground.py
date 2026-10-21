@@ -83,3 +83,12 @@ loop_code = 'for i, row in df.iterrows():\n    df.at[i, "total"] = row["price"] 
 result = run_code(loop_code, data)
 print(result["df"])
 print(data["df"])
+
+
+from unloop.verifier import verify_code
+
+fast_code = 'df["total"] = df["price"] * df["qty"]'
+print(verify_code(loop_code, fast_code, data))
+
+wrong_code = 'df["total"] = df["price"] + df["qty"]'
+print(verify_code(loop_code, wrong_code, data))
