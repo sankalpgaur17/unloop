@@ -2,6 +2,7 @@
 
 from unloop.ai import ask_ai
 from unloop.benchmark import time_code
+from unloop.cache import get_cached, save_to_cache
 from unloop.rewriter import rewrite_code
 from unloop.verifier import verify_code
 
@@ -35,6 +36,13 @@ def optimize(code, variables=None, min_speedup=1.5, use_ai=True, ai_attempts=3):
     if not use_ai:
         return {"status": "no_change", "code": code}
 
+    cached = get_cached(code)
+    if cached:
+        result = check_candidate(code, cached, variables, min_speedup)
+        if result["status"] == "optimized":
+            result["source"] = "cache"
+            return result
+
     result = {"status": "no_change", "code": code}
     feedback = None
     for attempt in range(ai_attempts):
@@ -45,6 +53,7 @@ def optimize(code, variables=None, min_speedup=1.5, use_ai=True, ai_attempts=3):
         result["source"] = "ai"
         result["attempts"] = attempt + 1
         if result["status"] == "optimized":
+            save_to_cache(code, new_code)
             return result
         problem = "; ".join(result.get("notes", [])) or result["status"]
         feedback = f"Your rewrite:\n{new_code}\nProblem: {problem}"
