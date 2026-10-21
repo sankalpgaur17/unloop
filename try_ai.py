@@ -1,4 +1,6 @@
-from unloop.ai import ask_ai
+import numpy as np
+import pandas as pd
+from unloop import optimize
 
 slow = """for i, row in df.iterrows():
     if row["price"] > 0.5:
@@ -7,4 +9,7 @@ slow = """for i, row in df.iterrows():
         df.at[i, "label"] = "low"
 """
 
-print(ask_ai(slow))
+data = {"df": pd.DataFrame({"price": np.random.rand(10000)})}
+result = optimize(slow, data)
+print(result["status"], result.get("source", ""), result.get("verdict", ""))
+print(result["code"])

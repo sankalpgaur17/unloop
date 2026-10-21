@@ -34,7 +34,7 @@ def ask_ai(code, model=DEFAULT_MODEL, timeout=120):
             answer = json.loads(response.read())["response"]
     except (OSError, ValueError, KeyError):
         return None
-    return extract_code(answer)
+    return add_missing_imports(extract_code(answer))
 
 
 def extract_code(answer):
@@ -43,3 +43,11 @@ def extract_code(answer):
     if match:
         return match.group(1).strip()
     return answer.strip()
+
+def add_missing_imports(code):
+    """Add numpy or pandas imports if the code uses them without importing."""
+    if "np." in code and "import numpy" not in code:
+        code = "import numpy as np\n" + code
+    if "pd." in code and "import pandas" not in code:
+        code = "import pandas as pd\n" + code
+    return code
