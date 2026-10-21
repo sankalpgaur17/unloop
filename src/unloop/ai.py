@@ -1,0 +1,45 @@
+"""Ask a local Ollama model to rewrite slow code."""
+
+import json
+import re
+import urllib.request
+
+OLLAMA_URL = "http://localhost:11434/api/generate"
+DEFAULT_MODEL = "qwen2.5-coder:3b"
+
+SYSTEM_PROMPT = (
+    "You optimize slow pandas and NumPy code. "
+    "Rewrite the user's code so it gives exactly the same results but runs faster, "
+    "using vectorized operations. Keep the same variable names. "
+    "Reply with only the rewritten Python code in one code block, and no explanation."
+)
+
+
+def ask_ai(code, model=DEFAULT_MODEL, timeout=120):
+    """Send code to the local model and return its rewritten code, or None."""
+    payload = {
+        "model": model,
+        "system": SYSTEM_PROMPT,
+        "prompt": code,
+        "stream": False,
+        "options": {"temperature": 0},
+    }
+    request = urllib.request.Request(
+        OLLAMA_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            answer = json.loads(response.read())["response"]
+    except (OSError, ValueError, KeyError):
+        return None
+    return extract_code(answer)
+
+
+def extract_code(answer):
+    """Pull the code out of a reply that may be wrapped in ``` fences."""
+    match = re.search(r"```(?:python)?\s*\n(.*?)```", answer, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return answer.strip()
