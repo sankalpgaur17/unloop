@@ -109,7 +109,7 @@ def rewrite_iterrows_loop(loop):
     return ast.fix_missing_locations(new_stmt)
 
 class LoopRewriter(ast.NodeTransformer):
-    """Replace every rewritable iterrows() loop in a code tree."""
+    """Find every rewritable iterrows() loop and remember its replacement."""
 
     def __init__(self):
         self.changes = []
@@ -119,14 +119,21 @@ class LoopRewriter(ast.NodeTransformer):
         new_stmt = rewrite_iterrows_loop(node)
         if new_stmt is None:
             return node
-        self.changes.append(node.lineno)
+        self.changes.append((node.lineno, node.end_lineno, ast.unparse(new_stmt)))
         return new_stmt
 
 
 def rewrite_code(code):
-    """Return the code with slow loops replaced, and the lines that changed."""
+    """Replace only the slow loops' lines, keeping comments and formatting."""
     tree = ast.parse(code)
     rewriter = LoopRewriter()
-    new_tree = rewriter.visit(tree)
-    ast.fix_missing_locations(new_tree)
-    return ast.unparse(new_tree), rewriter.changes
+    rewriter.visit(tree)
+
+    lines = code.splitlines()
+    for start, end, new_text in sorted(rewriter.changes, reverse=True):
+        original = lines[start - 1]
+        indent = original[: len(original) - len(original.lstrip())]
+        lines[start - 1 : end] = [indent + new_text]
+
+    changed_lines = [change[0] for change in rewriter.changes]
+    return "\n".join(lines), changed_lines

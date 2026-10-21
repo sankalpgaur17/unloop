@@ -109,3 +109,18 @@ result = optimize(loop_code, big)
 print(result["status"], result["verdict"], f"{result['speedup']:.0f}x")
 print(result["code"])
 print(result["notes"])
+
+
+commented = """
+# Load data
+df = pd.DataFrame({"price": [1.0, 2.0], "qty": [3.0, 4.0]})
+
+# Compute totals
+for i, row in df.iterrows():
+    df.at[i, "total"] = row["price"] * row["qty"]
+
+print(df)  # show result
+"""
+
+new_code, changed = rewrite_code(commented)
+print(new_code)
