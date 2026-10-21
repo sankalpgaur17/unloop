@@ -9,9 +9,13 @@ DEFAULT_MODEL = "qwen2.5-coder:3b"
 
 SYSTEM_PROMPT = (
     "You optimize slow pandas and NumPy code. "
-    "Rewrite the user's code so it gives exactly the same results but runs faster, "
-    "using vectorized operations. Keep the same variable names. "
-    "Reply with only the rewritten Python code in one code block, and no explanation."
+    "Rewrite the user's code so it runs faster using vectorized operations. "
+    "Follow these rules strictly:\n"
+    "1. The results must be exactly the same, including for rows with missing values (NaN). "
+    "Remember that any comparison with NaN is False, so in if/else logic, NaN rows go to the else branch.\n"
+    "2. For if/else logic, use np.where or np.select, so that every row gets a value.\n"
+    "3. Keep the same variable names and column names.\n"
+    "4. Reply with only the rewritten Python code in one code block, and no explanation."
 )
 
 
@@ -46,6 +50,7 @@ def extract_code(answer):
     if match:
         return match.group(1).strip()
     return answer.strip()
+
 
 def add_missing_imports(code):
     """Add numpy or pandas imports if the code uses them without importing."""
