@@ -72,3 +72,14 @@ print(compare_dataframes(old_space["df"], old_space["df"]))
 from unloop.verifier import describe_dtype_changes
 
 print(describe_dtype_changes(old_space["df"], new_space["df"]))
+
+
+import pandas as pd
+from unloop.verifier import run_code
+
+data = {"df": pd.DataFrame({"price": [10, 20], "qty": [1, 2]})}
+loop_code = 'for i, row in df.iterrows():\n    df.at[i, "total"] = row["price"] * row["qty"]'
+
+result = run_code(loop_code, data)
+print(result["df"])
+print(data["df"])
