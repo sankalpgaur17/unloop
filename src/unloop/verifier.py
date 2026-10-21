@@ -16,3 +16,12 @@ def compare_dataframes(old, new):
         return "same_values"
     except AssertionError:
         return "different"
+
+
+def describe_dtype_changes(old, new):
+    """List columns whose data type changed, like 'total: float64 -> int64'."""
+    changes = []
+    for column in old.columns:
+        if column in new.columns and old[column].dtype != new[column].dtype:
+            changes.append(f"{column}: {old[column].dtype} -> {new[column].dtype}")
+    return changes
