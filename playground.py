@@ -43,3 +43,10 @@ print(ast.unparse(new))
 
 unsafe = 'for i, row in df.iterrows():\n    df.at[i, "total"] = get_tax(row)'
 print(rewrite_iterrows_loop(ast.parse(unsafe).body[0]))
+
+
+from unloop.rewriter import rewrite_code
+
+new_code, changed = rewrite_code(sample)
+print(new_code)
+print("Rewritten loops at lines:", changed)
