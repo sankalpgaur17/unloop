@@ -25,3 +25,11 @@ good = ast.parse('row["price"] * row["qty"] + 5', mode="eval").body
 bad = ast.parse('row["price"] * get_tax(row)', mode="eval").body
 print(is_simple_expression(good, "row"))
 print(is_simple_expression(bad, "row"))
+
+from unloop.rewriter import match_iterrows_header
+
+loop = ast.parse('for i, row in df.iterrows():\n    pass').body[0]
+print(match_iterrows_header(loop))
+
+other = ast.parse('for x in range(10):\n    pass').body[0]
+print(match_iterrows_header(other))

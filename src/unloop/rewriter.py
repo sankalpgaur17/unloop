@@ -39,3 +39,24 @@ def is_simple_expression(node, row_name):
     if isinstance(node, ast.UnaryOp):
         return is_simple_expression(node.operand, row_name)
     return False
+
+def match_iterrows_header(loop):
+    """For 'for INDEX, ROW in DF.iterrows():' return the three names, or None."""
+    target = loop.target
+    if not (isinstance(target, ast.Tuple) and len(target.elts) == 2):
+        return None
+    index_var, row_var = target.elts
+    if not (isinstance(index_var, ast.Name) and isinstance(row_var, ast.Name)):
+        return None
+
+    call = loop.iter
+    if not (
+        isinstance(call, ast.Call)
+        and isinstance(call.func, ast.Attribute)
+        and call.func.attr == "iterrows"
+        and isinstance(call.func.value, ast.Name)
+        and not call.args
+    ):
+        return None
+
+    return index_var.id, row_var.id, call.func.value.id
