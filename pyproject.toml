@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unloop"
+version = "0.0.1"
+description = "Turn slow pandas loops into fast, verified vectorized code."
+authors = [{ name = "Sankalp Gaur" }]
+requires-python = ">=3.9"
+dependencies = ["pandas>=1.5", "numpy"]
