@@ -2,6 +2,7 @@
 
 __version__ = "0.0.1"
 
+from unloop.magic import load_ipython_extension
 from unloop.optimizer import optimize
 
 __all__ = ["optimize"]
