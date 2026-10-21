@@ -50,3 +50,15 @@ from unloop.rewriter import rewrite_code
 new_code, changed = rewrite_code(sample)
 print(new_code)
 print("Rewritten loops at lines:", changed)
+
+
+old_space = {}
+exec(sample, old_space)
+
+new_space = {}
+exec(new_code, new_space)
+
+print(old_space["df"])
+print(new_space["df"])
+print(old_space["df"].dtypes)
+print(new_space["df"].dtypes)
