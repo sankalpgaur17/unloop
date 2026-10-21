@@ -62,3 +62,8 @@ print(old_space["df"])
 print(new_space["df"])
 print(old_space["df"].dtypes)
 print(new_space["df"].dtypes)
+
+from unloop.verifier import compare_dataframes
+
+print(compare_dataframes(old_space["df"], new_space["df"]))
+print(compare_dataframes(old_space["df"], old_space["df"]))
