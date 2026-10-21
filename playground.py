@@ -101,3 +101,11 @@ big = {"df": pd.DataFrame({"price": np.random.rand(10000), "qty": np.random.rand
 slow_time = time_code(loop_code, big, repeats=3)
 fast_time = time_code(fast_code, big, repeats=3)
 print(f"Slow: {slow_time:.4f}s  Fast: {fast_time:.4f}s  Speedup: {slow_time / fast_time:.0f}x")
+
+
+from unloop.optimizer import optimize
+
+result = optimize(loop_code, big)
+print(result["status"], result["verdict"], f"{result['speedup']:.0f}x")
+print(result["code"])
+print(result["notes"])
