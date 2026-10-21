@@ -6,18 +6,8 @@ from unloop.rewriter import rewrite_code
 from unloop.verifier import verify_code
 
 
-def optimize(code, variables=None, min_speedup=1.5, use_ai=True):
-    """Try to speed up code safely. Return a result dictionary."""
-    new_code, changed_lines = rewrite_code(code)
-    source = "rules"
-    if not changed_lines:
-        if not use_ai:
-            return {"status": "no_change", "code": code}
-        new_code = ask_ai(code)
-        if not new_code or new_code.strip() == code.strip():
-            return {"status": "no_change", "code": code}
-        source = "ai"
-
+def check_candidate(code, new_code, variables, min_speedup):
+    """Verify and benchmark one rewrite. Return a result dictionary."""
     try:
         verdict, notes = verify_code(code, new_code, variables)
     except Exception as error:
@@ -31,12 +21,31 @@ def optimize(code, variables=None, min_speedup=1.5, use_ai=True):
     if speedup < min_speedup:
         return {"status": "not_faster", "code": code, "speedup": speedup}
 
-    return {
-        "status": "optimized",
-        "code": new_code,
-        "source": source,
-        "verdict": verdict,
-        "notes": notes,
-        "lines": changed_lines,
-        "speedup": speedup,
-    }
+    return {"status": "optimized", "code": new_code, "verdict": verdict, "notes": notes, "speedup": speedup}
+
+
+def optimize(code, variables=None, min_speedup=1.5, use_ai=True, ai_attempts=3):
+    """Try to speed up code safely. Return a result dictionary."""
+    new_code, changed_lines = rewrite_code(code)
+    if changed_lines:
+        result = check_candidate(code, new_code, variables, min_speedup)
+        result["source"] = "rules"
+        return result
+
+    if not use_ai:
+        return {"status": "no_change", "code": code}
+
+    result = {"status": "no_change", "code": code}
+    feedback = None
+    for attempt in range(ai_attempts):
+        new_code = ask_ai(code, feedback=feedback)
+        if not new_code or new_code.strip() == code.strip():
+            break
+        result = check_candidate(code, new_code, variables, min_speedup)
+        result["source"] = "ai"
+        result["attempts"] = attempt + 1
+        if result["status"] == "optimized":
+            return result
+        problem = "; ".join(result.get("notes", [])) or result["status"]
+        feedback = f"Your rewrite:\n{new_code}\nProblem: {problem}"
+    return result

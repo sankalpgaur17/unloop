@@ -46,13 +46,21 @@ def run_code(code, variables):
     return space
 
 
-def verify_code(old_code, new_code, variables=None):
-    """Run both versions and compare every DataFrame. Return (verdict, notes)."""
-    if variables is None:
-        variables = {}
-    old_space = run_code(old_code, variables)
-    new_space = run_code(new_code, variables)
+def make_tricky_variables(variables):
+    """Copy the data with missing values mixed in, to catch hidden bugs."""
+    tricky = copy_variables(variables)
+    for name, value in tricky.items():
+        if isinstance(value, pd.DataFrame) and len(value) > 0:
+            small = value.head(20).copy()
+            for column in small.select_dtypes(include="number").columns:
+                small[column] = small[column].astype(float)
+                small.iloc[::3, small.columns.get_loc(column)] = np.nan
+            tricky[name] = small
+    return tricky
 
+
+def compare_spaces(old_space, new_space):
+    """Compare every DataFrame in two workspaces. Return (verdict, notes)."""
     verdict = "identical"
     notes = []
     for name, old_value in old_space.items():
@@ -67,4 +75,29 @@ def verify_code(old_code, new_code, variables=None):
         if result == "same_values":
             verdict = "same_values"
             notes.extend(describe_dtype_changes(old_value, new_value))
+    return verdict, notes
+
+
+def verify_code(old_code, new_code, variables=None):
+    """Compare both versions on the real data, then on tricky data."""
+    if variables is None:
+        variables = {}
+    old_space = run_code(old_code, variables)
+    new_space = run_code(new_code, variables)
+    verdict, notes = compare_spaces(old_space, new_space)
+    if verdict == "different":
+        return verdict, notes
+
+    tricky = make_tricky_variables(variables)
+    try:
+        old_tricky = run_code(old_code, tricky)
+    except Exception:
+        return verdict, notes
+    try:
+        new_tricky = run_code(new_code, tricky)
+    except Exception:
+        return "different", ["new code fails on data with missing values"]
+    tricky_verdict, tricky_notes = compare_spaces(old_tricky, new_tricky)
+    if tricky_verdict == "different":
+        return "different", [note + " when data has missing values" for note in tricky_notes]
     return verdict, notes

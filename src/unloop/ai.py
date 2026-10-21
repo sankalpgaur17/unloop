@@ -15,12 +15,15 @@ SYSTEM_PROMPT = (
 )
 
 
-def ask_ai(code, model=DEFAULT_MODEL, timeout=120):
+def ask_ai(code, model=DEFAULT_MODEL, timeout=120, feedback=None):
     """Send code to the local model and return its rewritten code, or None."""
+    prompt = code
+    if feedback:
+        prompt = f"{code}\n\n{feedback}\nPlease write a corrected version."
     payload = {
         "model": model,
         "system": SYSTEM_PROMPT,
-        "prompt": code,
+        "prompt": prompt,
         "stream": False,
         "options": {"temperature": 0},
     }

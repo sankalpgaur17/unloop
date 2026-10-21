@@ -11,5 +11,5 @@ slow = """for i, row in df.iterrows():
 
 data = {"df": pd.DataFrame({"price": np.random.rand(10000)})}
 result = optimize(slow, data)
-print(result["status"], result.get("source", ""), result.get("verdict", ""))
+print(result["status"], result.get("source", ""), result.get("attempts", ""), result.get("verdict", ""))
 print(result["code"])
