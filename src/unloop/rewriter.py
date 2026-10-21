@@ -60,3 +60,50 @@ def match_iterrows_header(loop):
         return None
 
     return index_var.id, row_var.id, call.func.value.id
+
+
+def rewrite_iterrows_loop(loop):
+    """Turn a simple iterrows() loop into one vectorized line, or return None."""
+    names = match_iterrows_header(loop)
+    if names is None:
+        return None
+    index_name, row_name, df_name = names
+
+    if len(loop.body) != 1 or loop.orelse:
+        return None
+    stmt = loop.body[0]
+    if not (isinstance(stmt, ast.Assign) and len(stmt.targets) == 1):
+        return None
+
+    left = stmt.targets[0]
+    if not (
+        isinstance(left, ast.Subscript)
+        and isinstance(left.value, ast.Attribute)
+        and left.value.attr in ("at", "loc")
+        and isinstance(left.value.value, ast.Name)
+        and left.value.value.id == df_name
+        and isinstance(left.slice, ast.Tuple)
+        and len(left.slice.elts) == 2
+    ):
+        return None
+
+    row_key, column = left.slice.elts
+    if not (
+        isinstance(row_key, ast.Name)
+        and row_key.id == index_name
+        and isinstance(column, ast.Constant)
+        and isinstance(column.value, str)
+    ):
+        return None
+
+    if not is_simple_expression(stmt.value, row_name):
+        return None
+
+    new_value = RowToColumn(row_name, df_name).visit(stmt.value)
+    new_target = ast.Subscript(
+        value=ast.Name(id=df_name, ctx=ast.Load()),
+        slice=ast.Constant(value=column.value),
+        ctx=ast.Store(),
+    )
+    new_stmt = ast.Assign(targets=[new_target], value=new_value)
+    return ast.fix_missing_locations(new_stmt)

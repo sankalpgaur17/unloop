@@ -33,3 +33,13 @@ print(match_iterrows_header(loop))
 
 other = ast.parse('for x in range(10):\n    pass').body[0]
 print(match_iterrows_header(other))
+
+
+from unloop.rewriter import rewrite_iterrows_loop
+
+code = 'for i, row in df.iterrows():\n    df.at[i, "total"] = row["price"] * row["qty"]'
+new = rewrite_iterrows_loop(ast.parse(code).body[0])
+print(ast.unparse(new))
+
+unsafe = 'for i, row in df.iterrows():\n    df.at[i, "total"] = get_tax(row)'
+print(rewrite_iterrows_loop(ast.parse(unsafe).body[0]))
