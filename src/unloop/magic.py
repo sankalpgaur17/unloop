@@ -12,7 +12,7 @@ def load_ipython_extension(ipython):
     def unloop_magic(line, cell):
         try:
             with contextlib.redirect_stdout(io.StringIO()):
-                result = optimize(cell, ipython.user_ns)
+                result = optimize(cell, ipython.user_ns, use_ai="--no-ai" not in line)
         except Exception as error:
             print(f"unloop: could not analyze this cell ({error}). Running it unchanged.")
             ipython.run_cell(cell)
@@ -20,11 +20,11 @@ def load_ipython_extension(ipython):
 
         status = result["status"]
         if status == "optimized" and result["verdict"] == "identical":
-            print(f"unloop: {result['speedup']:.0f}x faster, results identical. Running:")
+            print(f"unloop: {result['speedup']:.0f}x faster via {result['source']}, results identical. Running:")
             print(result["code"])
             ipython.run_cell(result["code"])
         elif status == "optimized":
-            print(f"unloop: {result['speedup']:.0f}x faster, but data types change:")
+            print(f"unloop: {result['speedup']:.0f}x faster via {result['source']}, but data types change:")
             for note in result["notes"]:
                 print("  " + note)
             print("Suggested code (not applied):")
